@@ -15,9 +15,9 @@ For datasets with a small number of SNPs (e.g. < 5,000) it is recommended to dea
 
 ## Requirements
 
-Java 8 or later
+Java 14 or later
 
-[Apache Commons Math](https://github.com/apache/commons-math) 3.6.1 or later (for compiling the program yourself)
+[Infodynamics library](https://github.com/jlizier/jidt/tree/master/java/source/infodynamics) (for compiling the program yourself)
 
 ## Getting Started
 
