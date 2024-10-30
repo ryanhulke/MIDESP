@@ -1,9 +1,6 @@
 #!/bin/bash
 
-
 ### This script compiles all Java files in the src directory and packages them into a JAR file.
-
-module load java
 
 # Define output JAR name and directories
 OUT_DIR="out"
