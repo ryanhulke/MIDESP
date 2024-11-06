@@ -44,7 +44,7 @@ Optional parameters:
 -noapc			indicate that the APC should not be applied
 -noepi			indicate that no epistatic SNP pairs should be calculated
 -all			write an additional file containing the MI values for all SNPs (outputfile.allSNPs)
--cmi        file    indicate that Conditional MI should be used instead of the MI, and provide the file with the conditions, assumed to be the same order as the SNPs in the tped file
+-cmi        file_path  bin_size   indicate that Conditional MI should be used instead of the MI, and provide the file with the conditions, assumed to be the same order as the SNPs in the tped file. Provide the bin size for discrete values (ideal for age)
 ```
 ## Examples
 The datasets we analyzed in our publication can be found under [Tuberculosis](https://doi.org/10.5061/dryad.519bm) and [Eggweight](https://figshare.com/articles/dataset/Genome-wide_Association_Analysis_of_Age-Dependent_Egg_Weights_in_Chickens/5844420) (see also their corresponding publications [https://doi.org/10.1038/hdy.2013.137](https://doi.org/10.1038/hdy.2013.137) and [https://doi.org/10.3389/fgene.2018.00128](https://doi.org/10.3389/fgene.2018.00128)).
