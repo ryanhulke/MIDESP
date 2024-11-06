@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import midesp.methods.CMICalculator;
 import midesp.methods.MICalculator;
 import midesp.methods.SignificanceFinder;
+import midesp.objects.Condition;
 import midesp.objects.LimitedPriorityQueue;
 import midesp.objects.MIResult;
 import midesp.objects.Phenotype;
@@ -34,6 +35,8 @@ public class Main {
 	private static int kNext = 30;
 	private static int apcAverageNumber = 5000;
 	private static double fdr = 0.005;
+	private static List<Condition> conditions;
+	private static int binSize;
 	
 	public static void main(String[] args) throws Exception {
 		
@@ -103,9 +106,8 @@ public class Main {
 		if (useCMI) { // use Conditional Mutual Information
 			System.out.println("Using CMI");
 			System.out.println("Calculating single SNP association values");
-			double[][] conditions = pheno.getConditions(conditionFile);
 			singleSNPMI = snpList.parallelStream().map(snp ->{
-				double cmi = CMICalculator.calcCMI(snp.getGenotypes(), pheno.getDiscPhenotype(), conditions, kNext);
+				double cmi = CMICalculator.calcCMI(conditions, pheno, snp);
 				snp.setMItoPheno(cmi);
 				return cmi;
 			}).collect(Collectors.toList());
@@ -189,13 +191,15 @@ public class Main {
 					SNP firstSNP = sigSNPList.get(i);
 					List<MIResult> tempResults = (List<MIResult>) targetSNPList.subList(i, targetSNPList.size()).parallelStream().map(secondSNP ->{
 						double mi;
-						if(isContinuous) {
+						if (useCMI) {
+							mi = CMICalculator.calcCMI(conditions, pheno, firstSNP, secondSNP);
+						} else if(isContinuous) {
 							mi = MICalculator.calcMI_ContPheno(pheno, kNext, firstSNP, secondSNP);
 						}
 						else {
 							mi = MICalculator.calcMI_DiscPheno(pheno, firstSNP, secondSNP);
 						}
-						return new MIResult(firstSNP.getID(), secondSNP.getID(), mi);
+					return new MIResult(firstSNP.getID(), secondSNP.getID(), mi);
 					}).collect(Collectors.toList());
 					topResults.addAll(tempResults);
 				}
@@ -208,7 +212,9 @@ public class Main {
 					SNP firstSNP = fileSigSNPList.get(i);
 					List<MIResult> tempResults = targetSNPList.subList(i, targetSNPList.size()).parallelStream().map(secondSNP ->{
 						double mi;
-						if(isContinuous) {
+						if (useCMI) {
+							mi = CMICalculator.calcCMI(conditions, pheno, firstSNP, secondSNP);
+						} else if(isContinuous) {
 							mi = MICalculator.calcMI_ContPheno(pheno, kNext, firstSNP, secondSNP);
 						}
 						else {
@@ -250,11 +256,15 @@ public class Main {
 			Collections.shuffle(randIndices);
 			double sum = 0.0;
 			for(int i = 0; i < apcAverageNumber; i++) {
-				if(isContinuous) {
-					sum += MICalculator.calcMI_ContPheno(pheno, kNext, snp, snpList.get(randIndices.get(i)));
+				SNP randomSNP = snpList.get(randIndices.get(i));
+				if (useCMI) {
+					sum += CMICalculator.calcCMI(conditions, pheno, snp, randomSNP);
+				} 
+				else if(isContinuous) {
+					sum += MICalculator.calcMI_ContPheno(pheno, kNext, snp, randomSNP);
 				}
 				else {
-					sum += MICalculator.calcMI_DiscPheno(pheno, snp, snpList.get(randIndices.get(i)));
+					sum += MICalculator.calcMI_DiscPheno(pheno, snp, randomSNP);
 				}
 			}
 			snp.setAverageMItoPheno(sum / apcAverageNumber);
@@ -271,11 +281,15 @@ public class Main {
 			Collections.shuffle(randIndices);
 			double sum = 0.0;
 			for(int i = 0; i < apcAverageNumber; i++) {
-				if(isContinuous) {
-					sum += MICalculator.calcMI_ContPheno(pheno, kNext, snp, snpList.get(randIndices.get(i)));
+				SNP randomSNP = snpList.get(randIndices.get(i));
+				if (useCMI) {
+					sum += CMICalculator.calcCMI(conditions, pheno, snp, randomSNP);
+				} 
+				else if(isContinuous) {
+					sum += MICalculator.calcMI_ContPheno(pheno, kNext, snp, randomSNP);
 				}
 				else {
-					sum += MICalculator.calcMI_DiscPheno(pheno, snp, snpList.get(randIndices.get(i)));
+					sum += MICalculator.calcMI_DiscPheno(pheno, snp, randomSNP);
 				}
 			}
 			return sum / apcAverageNumber;
@@ -292,11 +306,15 @@ public class Main {
 			Collections.shuffle(randIndices);
 			double sum = 0.0;
 			for(int i = 0; i < apcAverageNumber; i++) {
-				if(isContinuous) {
-					sum += MICalculator.calcMI_ContPheno(pheno, kNext, snp, snpList.get(randIndices.get(i)));
+				SNP randomSNP = snpList.get(randIndices.get(i));
+				if (useCMI) {
+					sum += CMICalculator.calcCMI(conditions, pheno, snp, randomSNP);
+				} 
+				else if(isContinuous) {
+					sum += MICalculator.calcMI_ContPheno(pheno, kNext, snp, randomSNP);
 				}
 				else {
-					sum += MICalculator.calcMI_DiscPheno(pheno, snp, snpList.get(randIndices.get(i)));
+					sum += MICalculator.calcMI_DiscPheno(pheno, snp, randomSNP);
 				}
 			}
 			return sum / apcAverageNumber;
@@ -314,11 +332,15 @@ public class Main {
 				Collections.shuffle(randIndices);
 				double sum = 0.0;
 				for(int i = 0; i < apcAverageNumber; i++) {
-					if(isContinuous) {
-						sum += MICalculator.calcMI_ContPheno(pheno, kNext, snp, snpList.get(randIndices.get(i)));
+					SNP randomSNP = snpList.get(randIndices.get(i));
+					if (useCMI) {
+						sum += CMICalculator.calcCMI(conditions, pheno, snp, randomSNP);
+					} 
+					else if(isContinuous) {
+						sum += MICalculator.calcMI_ContPheno(pheno, kNext, snp, randomSNP);
 					}
 					else {
-						sum += MICalculator.calcMI_DiscPheno(pheno, snp, snpList.get(randIndices.get(i)));
+						sum += MICalculator.calcMI_DiscPheno(pheno, snp, randomSNP);
 					}
 				}
 				snp.setAverageMItoPheno(sum / apcAverageNumber);
@@ -347,7 +369,10 @@ public class Main {
 				SNP firstSNP = sigSNPList.get(i);
 				List<MIResult> tempResults = targetSNPList.subList(i, targetSNPList.size()).parallelStream().map(secondSNP ->{
 					double mi;
-					if(isContinuous) {
+					if (useCMI) {
+						mi = CMICalculator.calcCMI(conditions, pheno, firstSNP, secondSNP);
+					} 
+					else if(isContinuous) {
 						mi = MICalculator.calcMI_ContPheno(pheno, kNext, firstSNP, secondSNP);
 					}
 					else {
@@ -367,7 +392,9 @@ public class Main {
 				SNP firstSNP = fileSigSNPList.get(i);
 				List<MIResult> tempResults = targetSNPList.subList(i, targetSNPList.size()).parallelStream().map(secondSNP ->{
 					double mi;
-					if(isContinuous) {
+					if (useCMI) {
+						mi = CMICalculator.calcCMI(conditions, pheno, firstSNP, secondSNP);
+					} else if(isContinuous) {
 						mi = MICalculator.calcMI_ContPheno(pheno, kNext, firstSNP, secondSNP);
 					}
 					else {
@@ -407,7 +434,7 @@ public class Main {
 		return pairCounter;
 	}
 	
-	private static void parseArgs(String[] args) throws IllegalArgumentException{
+	private static void parseArgs(String[] args) throws IllegalArgumentException, IOException {
 		Path tmpOutFile = null;
 		for(int i = 0; i < args.length - 2; i++){
 			switch(args[i]){
@@ -421,7 +448,8 @@ public class Main {
 			case "-cmi" -> {
 				useCMI = true;
 				conditionFile = Paths.get(args[++i]);
-
+				binSize = Integer.parseInt(args[++i]);
+				conditions = Condition.readConditions(conditionFile, binSize);
 			}
 			case "-apc" -> {
                             apcAverageNumber = Integer.parseInt(args[++i]);
@@ -477,6 +505,5 @@ public class Main {
 		System.out.println("-noapc\t\t\tindicate that the APC should not be applied");
 		System.out.println("-noepi\t\t\tindicate that no epistatic SNP pairs should be calculated");
 		System.out.println("-all\t\t\twrite an additional file containing the MI values for all SNPs (outputfile.allSNPs)");
-	}
-	
+	}	
 }

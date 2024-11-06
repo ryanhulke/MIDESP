@@ -29,7 +29,6 @@ public class Phenotype{
 	private double[] digammaValuesArray;
 	private int[][] closestNeighborsMat;
 	private double[][] closestNeighborsDistMat;
-	private double[][] conditions;
 	
 	public Phenotype(String id, int length, boolean continuous) {
 		this.id = id;
@@ -145,14 +144,6 @@ public class Phenotype{
 		}
 		pheno.parseValues();
 		return pheno;
-	}
-	
-	// expected format: one line per person, one col per condition, space-separated
-	public double[][] getConditions(Path conditionsFile) throws IOException {
-		conditions = Files.lines(conditionsFile).map(line -> {
-			return Arrays.stream(line.split(" ")).mapToDouble(Double::parseDouble).toArray();
-		}).toArray(double[][]::new);
-		return conditions;
 	}
 
 	@Override
